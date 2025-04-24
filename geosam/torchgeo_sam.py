@@ -58,11 +58,25 @@ class SamTestGridGeoSampler(GeoSampler):
             units: defines if ``size`` and ``stride`` are in pixel or CRS units
         """
         super().__init__(dataset, roi)
-        self.size = _to_tuple(size)
+        if isinstance(size, (int, float)):
+            self.size = (size, size)
+        elif isinstance(size, (tuple, list)) and len(size) == 2:
+            self.size = tuple(size)
+        else:
+            raise TypeError(f"Invalid type for `size`: {type(size)}, value: {size}")
+        
         self.patch_size = self.size
-        self.stride = _to_tuple(stride)
+        if isinstance(stride, (int, float)):
+            self.stride = (stride, stride)
+        elif isinstance(stride, (tuple, list)) and len(stride) == 2:
+            self.stride = tuple(stride)
+        else:
+            raise TypeError(f"Invalid type for `stride`: {type(stride)}, value: {stride}")
+
 
         if units == Units.PIXELS:
+            print(type(self.res), self.res)
+            self.res = float(self.res[0]) if isinstance(self.res, (tuple, list)) else float(self.res)
             self.size = (self.size[0] * self.res, self.size[1] * self.res)
             self.stride = (self.stride[0] * self.res,
                            self.stride[1] * self.res)
@@ -71,6 +85,7 @@ class SamTestGridGeoSampler(GeoSampler):
         self.hits_small = []
         for hit in self.index.intersection(tuple(self.roi), objects=True):
             bounds = BoundingBox(*hit.bounds)
+            print(f'self.size: {self.size}')
             if (
                 bounds.maxx - bounds.minx >= self.size[1]
                 # change 'and' to 'or' for handling strip images
@@ -442,8 +457,8 @@ class SamTestRasterDataset(RasterDataset):
         band_indexes = self.band_indexes
 
         src = vrt_fh
-        out_width = round((bbox.maxx - bbox.minx) / self.res)
-        out_height = round((bbox.maxy - bbox.miny) / self.res)
+        out_width = round((bbox.maxx - bbox.minx) / self.res[0])
+        out_height = round((bbox.maxy - bbox.miny) / self.res[0])
         # out_width = math.ceil((bbox.maxx - bbox.minx) / self.res)
         # out_height = math.ceil((bbox.maxy - bbox.miny) / self.res)
         count = len(band_indexes) if band_indexes else src.count

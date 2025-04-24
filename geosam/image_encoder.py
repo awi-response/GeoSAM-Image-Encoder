@@ -99,6 +99,10 @@ Encode_Settings = [
     'resolution'
 ]
 
+def normalize_img_size(size):
+    if isinstance(size, tuple) and len(size) == 1 and isinstance(size[0], tuple):
+        return size[0]
+    return size
 
 class ImageEncoder:
     '''Encode image to SAM features.'''
@@ -107,7 +111,7 @@ class ImageEncoder:
         self,
         checkpoint_path: Union[str, Path],
         model_type: str = None,
-        batch_size: int = 1,
+        batch_size: int = 8,
         gpu: bool = True,
         gpu_id: int = 0,
     ):
@@ -135,6 +139,7 @@ class ImageEncoder:
         self.model_type = check_model_type(model_type, self.checkpoint_path)
         self.device = detect_device(self.gpu, self.gpu_id)
         self.sam_model = self.initialize_sam()
+
 
     def encode_image(
         self,
@@ -296,13 +301,17 @@ class ImageEncoder:
             maxt=sam_ds.index.bounds[5]
         )
 
+        img_size = normalize_img_size(self.sam_model.image_encoder.img_size)
+        print(f' Image size: {img_size}')
+
         ds_sampler = SamTestGridGeoSampler(
             sam_ds,
-            size=self.sam_model.image_encoder.img_size,
+            size=img_size,
             stride=stride,
             roi=extent_bbox,
             units=Units.PIXELS  # Units.CRS or Units.PIXELS
         )
+
 
         if len(ds_sampler) == 0:
             raise ValueError(
@@ -470,7 +479,7 @@ def save_sam_feature(
         bbox_list = [bbox.minx, bbox.miny, bbox.maxx, bbox.maxy]
         bbox_str = '_'.join(map("{:.6f}".format, bbox_list))
         extent_str = '_'.join(
-            map("{:.6f}".format, extent)) + f"_res_{raster_ds.res:.6f}"
+            map("{:.6f}".format, extent)) + f"_res_{raster_ds.res[0]:.6f}"
         #  Unicode-objects must be encoded before hashing with hashlib and
         #  because strings in Python 3 are Unicode by default (unlike Python 2),
         #  you'll need to encode the string using the .encode method.
