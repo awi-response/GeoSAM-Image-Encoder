@@ -103,8 +103,6 @@ if __name__ == "__main__":
     print("[INFO] All encoding complete.")
 ```
 
-# Usage in QGis
-
 
 
 ### Script Parameters
@@ -117,6 +115,13 @@ if __name__ == "__main__":
 ## Output Format
 
 Each processed .tif file generates a corresponding .npz file in the specified output folder. These files contain the SAM-encoded features and are directly compatible with Geo-SAM in QGIS for interactive segmentation and labeling.
+
+## Usage in QGIS
+
+
+https://github.com/user-attachments/assets/f8f9b31b-1a51-4803-ae9a-bfd03ac6c09b
+
+
 
 ## Important Notes
 
