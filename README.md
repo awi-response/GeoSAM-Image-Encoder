@@ -56,6 +56,14 @@ feature_dir = '/path/to/encodings'  # Path to save the encoded features
 
 GPUS = [0, 1, 2, 3]
 
+def float32_to_uint16(image):
+    """Convert float32 image to uint16 by shifting by 10000 """
+    image = image* 10000
+    image = np.clip(image, 0, 65535)  # Clip to valid range for uint16
+    image = image.astype(np.uint16)  # Convert to uint16
+
+    return image
+
 def encode_images_on_gpu(gpu_id, image_paths):
     torch.cuda.set_device(gpu_id)
     print(f"[{current_process().name}] Using GPU {gpu_id}: {torch.cuda.get_device_name(gpu_id)}")
@@ -82,6 +90,31 @@ if __name__ == "__main__":
     image_paths = sorted(glob.glob(os.path.join(image_folder, "*.tif")))
     print(f"[INFO] Found {len(image_paths)} images in {image_folder}")
     print(f"[INFO] Available GPUs: {len(GPUS)}")
+
+    temp_image_folder = tempfile.mkdtemp(prefix="converted_")
+
+    # check if first image in image path is float32
+    with rasterio.open(image_paths[0]) as src:
+        dtype = src.dtypes[0]
+
+    if dtype == 'float32':
+        print("[INFO] Detected float32 images, converting to uint16 in temporary directory")
+
+        new_image_paths = []
+        for image_path in image_paths:
+            with rasterio.open(image_path) as src:
+                img = src.read()
+                meta = src.meta.copy()
+                meta['dtype'] = 'uint16'
+
+            img_uint16 = float32_to_uint16(img)
+
+            temp_path = os.path.join(temp_image_folder, os.path.basename(image_path))
+            with rasterio.open(temp_path, 'w', **meta) as dst:
+                dst.write(img_uint16)
+            new_image_paths.append(temp_path)
+
+        image_paths = new_image_paths
 
     if len(GPUS) == 0:
         raise RuntimeError("No CUDA GPUs available.")
