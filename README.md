@@ -57,8 +57,9 @@ checkpoint_path = '/path/to/checkpoint.pth'  # Path to the SAM checkpoint
 image_folder = '/path/to/images'  # Path to the folder containing images
 feature_dir = '/path/to/encodings'  # Path to save the encoded features
 
-GPUS = [0, 1, 2, 3]
 
+
+GPUS = [1, 2]
 
 def float32_to_uint16(image):
     """Convert float32 image to uint16 by shifting by 10000 """
@@ -150,6 +151,7 @@ if __name__ == "__main__":
             df.to_csv(csv_file, index=False)
 
     print("[INFO] All encoding complete.")
+
 ```
 
 
