@@ -56,6 +56,7 @@ feature_dir = '/path/to/encodings'  # Path to save the encoded features
 
 GPUS = [0, 1, 2, 3]
 
+
 def float32_to_uint16(image):
     """Convert float32 image to uint16 by shifting by 10000 """
     image = image* 10000
@@ -132,6 +133,18 @@ if __name__ == "__main__":
     # Wait for all processes to finish
     for p in processes:
         p.join()
+    
+    #find all csv files in feature_dir and subdirs
+    csv_files = glob.glob(os.path.join(feature_dir, "**", "*.csv"), recursive=True)
+    for csv_file in csv_files:
+        #open file as pd.df
+        df = pd.read_csv(csv_file)
+        #check if colum res is not a string
+        if df['res'].dtype == 'object':
+            #will be something like '(3,3)', write only the first number as float
+            df['res'] = df['res'].apply(lambda x: float(x.split(',')[0].replace('(', '')))
+            #save the df back to csv
+            df.to_csv(csv_file, index=False)
 
     print("[INFO] All encoding complete.")
 ```
