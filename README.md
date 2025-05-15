@@ -44,6 +44,9 @@ import torch
 import time
 import numpy as np
 import rasterio
+import tempfile
+import pandas as pd
+import shutil
 import geosam
 from geosam import ImageEncoder
 from tqdm import tqdm
